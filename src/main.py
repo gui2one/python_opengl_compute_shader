@@ -1,12 +1,15 @@
 import glfw
 from OpenGL import GL
 
+
+from Shader import Shader, ShaderSources
+
 def init_window(width, height, title):
     if not glfw.init():
         raise Exception("Failed to initialize GLFW")
 
     glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 4)
-    glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 3)
+    glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 6)
     glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)  # Modern OpenGL
     glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, GL.GL_TRUE)        # Forward compatibility
 
@@ -19,6 +22,13 @@ def init_window(width, height, title):
 
     print(f"OpenGL Version: {GL.glGetString(GL.GL_VERSION).decode('utf-8')}")
 
+    sources = ShaderSources()
+    sources.compute_source = '''#version 460
+void main(){
+    vec4 pos = vec4(0.2);
+}
+    '''
+    shader = Shader(sources=sources)
     return window
 
 def render_loop(window):
