@@ -13,7 +13,6 @@ class Shader:
             self.program = GL.glCreateProgram()
             
             shader = GL.glCreateShader(GL.GL_COMPUTE_SHADER)
-            
             GL.glShaderSource(shader,  sources.compute_source)
             GL.glCompileShader(shader)
             

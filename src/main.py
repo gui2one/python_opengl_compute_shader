@@ -1,10 +1,16 @@
 import glfw
+import os
 from OpenGL import GL
-
-
 from Shader import Shader, ShaderSources
 
+ROOT_DIR = os.path.dirname(os.path.dirname(__file__)) 
+SHADERS_DIR = os.path.join(ROOT_DIR, "shaders")
 shader : Shader = None
+
+def load_shader_source(path : str):
+    with open(path, "r") as f:
+        return f.read()
+
 def init_window(width, height, title):
     global shader
     if not glfw.init():
@@ -24,13 +30,9 @@ def init_window(width, height, title):
 
     print(f"OpenGL Version: {GL.glGetString(GL.GL_VERSION).decode('utf-8')}")
 
+    
     sources = ShaderSources()
-    sources.compute_source = '''#version 460
-layout(local_size_x = 16, local_size_y = 16) in; // Work group size
-void main(){
-    vec4 pos = vec4(0.2);
-}
-    '''
+    sources.compute_source = load_shader_source(f"{SHADERS_DIR}/simple_compute.glsl")
     shader = Shader(sources=sources)
     return window
 
