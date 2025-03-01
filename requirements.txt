@@ -1,5 +1,6 @@
 glcontext==3.0.0
 glfw==2.8.0
+imgui==2.0.0
 numpy==2.2.3
 PyOpenGL==3.1.9
 PyOpenGL-accelerate==3.1.9
