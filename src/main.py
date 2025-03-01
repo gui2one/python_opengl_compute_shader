@@ -9,8 +9,8 @@ ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
 SHADERS_DIR = os.path.join(ROOT_DIR, "shaders")
 shader: Shader = None
 IMGUI_IMPL = None
-
-
+ssbo = None
+buffer_size = None
 def init_imgui():
     # initilize imgui context (see documentation)
     imgui.create_context()
@@ -37,6 +37,8 @@ def load_shader_source(path: str):
 
 def init_window(width, height, title):
     global shader
+    global ssbo
+    global buffer_size
     if not glfw.init():
         raise Exception("Failed to initialize GLFW")
 
@@ -57,11 +59,15 @@ def init_window(width, height, title):
     sources = ShaderSources()
     sources.compute_source = load_shader_source(f"{SHADERS_DIR}/simple_compute.glsl")
     shader = Shader(sources=sources)
+    
+    buffer_size = 1024 * 4  # 1024 floats * 4 bytes
+    ssbo = create_ssbo(buffer_size)
 
     return window
 
 
 def render_loop(window):
+    global buffer_size
     glfw.swap_interval(1)
     while not glfw.window_should_close(window):
         glfw.wait_events()
@@ -76,7 +82,37 @@ def render_loop(window):
         imgui_end_frame()
 
         IMGUI_IMPL.render(imgui.get_draw_data())
+        
+        shader.use()
+        GL.glDispatchCompute(64, 1, 1)  # 64 groups of 16 threads (1024 threads total)
+        GL.glMemoryBarrier(GL.GL_SHADER_STORAGE_BARRIER_BIT)
+        result = read_ssbo(ssbo, buffer_size)
+        print("SSBO Data (first 10):", result[:10])     
         glfw.swap_buffers(window)
+        
+        # break # just once for testing 
+
+
+def create_ssbo(size):
+    ssbo = GL.glGenBuffers(1)
+    GL.glBindBuffer(GL.GL_SHADER_STORAGE_BUFFER, ssbo)
+    GL.glBufferData(GL.GL_SHADER_STORAGE_BUFFER, size, None, GL.GL_DYNAMIC_DRAW)
+    GL.glBindBufferBase(GL.GL_SHADER_STORAGE_BUFFER, 0, ssbo)
+    GL.glBindBuffer(GL.GL_SHADER_STORAGE_BUFFER, 0)
+    print(f"SSBO Created with {size} bytes")
+    
+    
+    return ssbo
+
+def read_ssbo(ssbo, size):
+    GL.glBindBuffer(GL.GL_SHADER_STORAGE_BUFFER, ssbo)
+    # ptr = GL.glMapBuffer(GL.GL_SHADER_STORAGE_BUFFER, GL.GL_READ_ONLY)
+    data = bytearray(GL.glGetBufferSubData(GL.GL_SHADER_STORAGE_BUFFER, 0, size))
+    # GL.glUnmapBuffer(GL.GL_SHADER_STORAGE_BUFFER)
+    GL.glBindBuffer(GL.GL_SHADER_STORAGE_BUFFER, 0)
+
+    floats = [float.fromhex(data[i:i+4].hex()) for i in range(0, len(data), 4)]
+    return floats
 
 
 def main():
