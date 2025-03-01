@@ -4,7 +4,9 @@ from OpenGL import GL
 
 from Shader import Shader, ShaderSources
 
+shader : Shader = None
 def init_window(width, height, title):
+    global shader
     if not glfw.init():
         raise Exception("Failed to initialize GLFW")
 
@@ -24,6 +26,7 @@ def init_window(width, height, title):
 
     sources = ShaderSources()
     sources.compute_source = '''#version 460
+layout(local_size_x = 16, local_size_y = 16) in; // Work group size
 void main(){
     vec4 pos = vec4(0.2);
 }
@@ -36,6 +39,7 @@ def render_loop(window):
         GL.glClear(GL.GL_COLOR_BUFFER_BIT)
         GL.glClearColor(0.1, 0.2, 0.3, 1.0)  # Dark blueish background
 
+        # shader.use()
         glfw.swap_buffers(window)
         glfw.poll_events()
 

@@ -10,11 +10,11 @@ class ShaderSources :
 class Shader:
     def __init__(self, sources : ShaderSources):
         if sources.compute_source != None :
-            print("got compute shader")
-                
+            self.program = GL.glCreateProgram()
+            
             shader = GL.glCreateShader(GL.GL_COMPUTE_SHADER)
+            
             GL.glShaderSource(shader,  sources.compute_source)
-            print(sources.compute_source)
             GL.glCompileShader(shader)
             
             # Check for compile errors
@@ -24,6 +24,23 @@ class Shader:
                 print(f"Shader Compilation Failed:\n{error_log.decode('utf-8')}")
                 raise Exception("Shader Compilation Error")
             else:
-                print("Shader compiled successfully")            
+                print("Shader compiled successfully")
+                
+            GL.glAttachShader(self.program, shader)    
+            GL.glLinkProgram(self.program)
+
+            # Check for linking errors
+            result = GL.glGetProgramiv(self.program, GL.GL_LINK_STATUS)
+            if not result:
+                error_log = GL.glGetProgramInfoLog(self.program)
+                print(f"Program Linking Failed:\n{error_log.decode('utf-8')}")
+                raise Exception("Shader Program Linking Error")
+            else:
+                print("Program linked successfully")
+
+            GL.glDeleteShader(shader)        
         else :
-            print("got other type ...")
+            print("got other shader type ...")
+            
+    def use(self):
+        GL.glUseProgram(self.program)
